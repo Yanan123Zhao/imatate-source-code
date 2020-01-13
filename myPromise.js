@@ -40,7 +40,7 @@ function resolvePromise (promise2, x, resolve, reject) {
   if (x === promise2) {
     reject('循环引用')
   }
-  // let called = false
+  let called = false
   // 如果是promise
   if (x instanceof MyPromise) {
     if (x.status === PENDING) {
@@ -54,16 +54,23 @@ function resolvePromise (promise2, x, resolve, reject) {
   } else if (x !== null && (typeof x === 'function' || typeof x === 'object')) {
     try {
       const then = x.then
-      if (typeof x === 'function') {
-        resolve(x())
-      } else (typeof then === 'function') {
+      if (typeof then === 'function') {
         then.call(x, (y) => {
+          if (called) return
+          called = true
           resolvePromise(promise2, y, resolve, reject)
-        }, reject)
+        }, (reason) => {
+          if (called) return
+          called = true
+          reject(reason)
+        })
       } else {
-        resolve(x)
+        // 如果x是个函数
+        resolve(x())
       } 
     } catch (reason) {
+      if (called) return
+      called = true
       reject(reason)
     }
     // 如果是普通值
@@ -130,13 +137,13 @@ MyPromise.prototype.catch = function (onRejected) {
 MyPromise.prototype.resolve = function (value) {
   return new MyPromise(resolve => {
     resolve(value)
-  }))
+  })
 }
 
 MyPromise.prototype.reject = function (value) {
   return new MyPromise((resolve, reject) => {
     reject(value)
-  }))
+  })
 }
 
 
@@ -170,4 +177,3 @@ MyPromise.race = function (promises) {
     })
   })
 }
-
