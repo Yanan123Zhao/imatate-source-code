@@ -40,6 +40,7 @@ function resolvePromise (promise2, x, resolve, reject) {
   if (x === promise2) {
     reject('循环引用')
   }
+  // let called = false
   // 如果是promise
   if (x instanceof MyPromise) {
     if (x.status === PENDING) {
@@ -53,13 +54,14 @@ function resolvePromise (promise2, x, resolve, reject) {
   } else if (x !== null && (typeof x === 'function' || typeof x === 'object')) {
     try {
       const then = x.then
-      if (typeof then === 'function') {
+      if (typeof x === 'function') {
+        resolve(x())
+      } else (typeof then === 'function') {
         then.call(x, (y) => {
           resolvePromise(promise2, y, resolve, reject)
         }, reject)
       } else {
-        // 如果x是个函数
-        resolve(x())
+        resolve(x)
       } 
     } catch (reason) {
       reject(reason)
