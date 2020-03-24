@@ -1,3 +1,10 @@
+// async await 对于generater 和 promise的封装使用如下
+function* myGenerator() {
+  console.log(yield Promise.resolve(1))   //1
+  console.log(yield Promise.resolve(2))   //2
+  console.log(yield 3)   //3
+}
+
 module.exports = function co1 (gen) {
   const it = gen()
   return new Promise((resolve, reject) => {
@@ -22,6 +29,7 @@ module.exports = function co1 (gen) {
 }
 
 
+// 为了保障doNext可以正常执行，可以把value使用promise.resolve封装成promise
 function co2 (gen) {
   const it = gen()
   return new Promise((resolve, reject) => {
@@ -30,9 +38,11 @@ function co2 (gen) {
       if (done) {
         resolve(lastValue)
       } else {
-        value.then(doNext, reject)
+        Promise.resolve(value).then(doNext, reject)
       }
     }
     doNext()
   })
 }
+
+co2(myGenerator)
